@@ -13,6 +13,9 @@ public class TwitterFetchService implements Job {
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
-
+        /*
+        * TODO Change name from TwitterFetchService to TweetsFetchService
+        * TODO Complete the execute method
+        * */
     }
 }
