@@ -89,9 +89,9 @@ public class TwitterAPIAdapter {
     }
 
     /**
-     * Method to initialize the newsFetchJob with data required for NewsFetchService.
+     * Method to initialize the tweetsFetchJob with data required for TweetsFetchService.
      * Creates a JobDataMap, to which data is added.
-     * The JobDataMap object is then used to build the newsFetchJob.
+     * The JobDataMap object is then used to build the tweetsFetchJob.
      */
     private void initTweetsFetchJob() {
         JobDataMap jobDataMap = new JobDataMap();
