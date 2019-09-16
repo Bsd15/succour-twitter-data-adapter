@@ -35,7 +35,8 @@ public class TwitterAPIAdapter {
     private JobDetail tweetsFetchJob;
     private Trigger trigger;
     private PublishSubject<Activity> tweetsPublishSubject;
-    private static final int schedulerInterval = 180;
+    private int schedulerInterval = 180;
+    private int fetchTweetsCount = 100;
 
     public TwitterAPIAdapter() throws SchedulerException {
         twitter = new TwitterTemplate(consumerKey, consumerSecretKey, accessToken, accessTokenSecret);
@@ -75,7 +76,7 @@ public class TwitterAPIAdapter {
             this.queryParams = new ArrayList<>();
         }
         if (!queryParam.isBlank() && !queryParam.isEmpty()) {
-            this.queryParams.add(new SearchParameters(queryParam).lang("en"));
+            this.queryParams.add(new SearchParameters(queryParam).lang("en").count(fetchTweetsCount));
         } else throw new EmptyQueryParamsException();
     }
 

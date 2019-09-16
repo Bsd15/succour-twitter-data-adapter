@@ -17,6 +17,7 @@ public class TwitterApiAdapterApplication {
 		try {
 			TwitterAPIAdapter twitterAPIAdapter = new TwitterAPIAdapter();
 			twitterAPIAdapter.addQueryParam("CGI");
+			twitterAPIAdapter.addQueryParam("Amazon");
 			twitterAPIAdapter.getTweets().subscribe(activity -> log.debug(activity.toString()));
 			twitterAPIAdapter.startNewsStream();
 		} catch (SchedulerException e) {
