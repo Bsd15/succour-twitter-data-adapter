@@ -45,8 +45,8 @@ public class TweetsFetchService implements Job {
     private Activity convertToActivity(String tweetText) {
         return activity()
                 .verb("post")
-                .actor("News-Adapter")
-                .object(object("article").content(tweetText))
+                .actor("Twitter-Adapter")
+                .object(object("tweet").content(tweetText))
                 .get();
     }
 }
