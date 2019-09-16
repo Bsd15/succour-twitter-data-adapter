@@ -79,7 +79,6 @@ public class TwitterAPIAdapter {
         } else throw new EmptyQueryParamsException();
     }
 
-    //TODO Add method to take SearchParam Object and add it to the queryParam list.
     public void addSearchParamToQueryParams(SearchParameters searchParameters) throws EmptySearchParametersException {
         if (searchParameters == null) {
             if (queryParams == null) {
