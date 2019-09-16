@@ -2,12 +2,13 @@ package com.stackroute.twitterapiadapter.adapter;
 
 import com.ibm.common.activitystreams.Activity;
 import com.stackroute.twitterapiadapter.exceptions.EmptyQueryParamsException;
-import com.stackroute.twitterapiadapter.service.TwitterFetchService;
+import com.stackroute.twitterapiadapter.exceptions.EmptySearchParametersException;
+import com.stackroute.twitterapiadapter.service.TweetsFetchService;
 import io.reactivex.subjects.PublishSubject;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.social.twitter.api.SearchParameters;
 import org.springframework.social.twitter.api.SearchResults;
 import org.springframework.social.twitter.api.Twitter;
 import org.springframework.social.twitter.api.impl.TwitterTemplate;
@@ -23,11 +24,11 @@ import static org.quartz.TriggerBuilder.newTrigger;
 @Component
 @Slf4j
 public class TwitterAPIAdapter {
-    private String consumerKey;
-    private String consumerSecretKey;
-    private String accessToken;
-    private String accessTokenSecret;
-    private List<String> queryParams;
+    private static final String consumerKey = "7DrIzeG3MkSRdCyHmF3D1paTI";
+    private static final String consumerSecretKey = "6Bl3O67toi74k6Q605k8HSxHHfDVor3VzZfsTZuELlKqHHK1Gl";
+    private static final String accessToken = "1164104302207438848-qPATTkkC4l21HN4m92xCeQ56W2HGoT";
+    private static final String accessTokenSecret = "8rwPOCNX2RDXafS0x7FqD00rBJJyrbvhWy0N0M3I5U7qE";
+    private List<SearchParameters> queryParams;
     private final Twitter twitter;
     private SchedulerFactory schedulerFactory;
     private Scheduler scheduler;
@@ -36,27 +37,23 @@ public class TwitterAPIAdapter {
     private PublishSubject<Activity> tweetsPublishSubject;
     private static final int schedulerInterval = 180;
 
-    public TwitterAPIAdapter(@Value("${twitter.consumerAPIKey}") String consumerKey, @Value("${twitter.consumerAPISecretKey}") String consumerSecretKey, @Value("${twitter.accessToken}") String accessToken, @Value("${twitter.accessTokenSecret}") String accessTokenSecret) throws SchedulerException {
-        this.consumerKey = consumerKey;
-        this.consumerSecretKey = consumerSecretKey;
-        this.accessToken = accessToken;
-        this.accessTokenSecret = accessTokenSecret;
+    public TwitterAPIAdapter() throws SchedulerException {
         twitter = new TwitterTemplate(consumerKey, consumerSecretKey, accessToken, accessTokenSecret);
         schedulerFactory = new StdSchedulerFactory();
         scheduler = schedulerFactory.getScheduler();
-        trigger = newTrigger().withIdentity("newsFetchTrigger", "newsFetchGroup").startNow()
+        trigger = newTrigger().withIdentity("tweetsFetchTrigger", "tweetsFetchGroup").startNow()
                 .withSchedule(simpleSchedule().withIntervalInSeconds(schedulerInterval).repeatForever()).build();
-
-        log.debug(twitter.toString());
-        SearchResults results = twitter.searchOperations().search("#spring");
-        results.getTweets().forEach(tweet -> log.debug(tweet.getText()));
+        tweetsPublishSubject = PublishSubject.create();
+//        log.debug(twitter.toString());
+//        SearchResults results = twitter.searchOperations().search("#spring");
+//        results.getTweets().forEach(tweet -> log.debug(tweet.getText()));
     }
 
-    public List<String> getQueryParams() {
+    public List<SearchParameters> getQueryParams() {
         return queryParams;
     }
 
-    public void setQueryParams(List<String> queryParams) {
+    public void setQueryParams(List<SearchParameters> queryParams) {
         this.queryParams = queryParams;
     }
 
@@ -64,14 +61,12 @@ public class TwitterAPIAdapter {
         return tweetsPublishSubject;
     }
 
-    ;
-
     /**
      * Add query to the queryParams list.
      *
      * @param queryParam String to be added to query params list.
      */
-    public void addQueryParam(String queryParam) {
+    public void addQueryParam(String queryParam) throws EmptyQueryParamsException {
         /*
          * Check if queryParams list is empty and if it's empty then
          * initialize it.
@@ -79,7 +74,19 @@ public class TwitterAPIAdapter {
         if (this.queryParams == null) {
             this.queryParams = new ArrayList<>();
         }
-        this.queryParams.add(queryParam);
+        if (!queryParam.isBlank() && !queryParam.isEmpty()) {
+            this.queryParams.add(new SearchParameters(queryParam).lang("en"));
+        } else throw new EmptyQueryParamsException();
+    }
+
+    //TODO Add method to take SearchParam Object and add it to the queryParam list.
+    public void addSearchParamToQueryParams(SearchParameters searchParameters) throws EmptySearchParametersException {
+        if (searchParameters == null) {
+            if (queryParams == null) {
+                this.queryParams = new ArrayList<>();
+            }
+            this.queryParams.add(searchParameters);
+        } else throw new EmptySearchParametersException();
     }
 
     /**
@@ -90,9 +97,10 @@ public class TwitterAPIAdapter {
     private void initTweetsFetchJob() {
         JobDataMap jobDataMap = new JobDataMap();
         jobDataMap.put("twitter", twitter);
+        jobDataMap.put("queryParams", this.queryParams);
         jobDataMap.put("tweetsPublishSubject", tweetsPublishSubject);
-        tweetsFetchJob = newJob(TwitterFetchService.class)
-                .withIdentity("newsFetchJob", "newsFetchJobGroup")
+        tweetsFetchJob = newJob(TweetsFetchService.class)
+                .withIdentity("tweetsFetchJob", "tweetsFetchJobGroup")
                 .usingJobData(jobDataMap)
                 .build();
     }
