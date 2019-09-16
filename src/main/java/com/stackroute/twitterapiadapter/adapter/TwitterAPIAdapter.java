@@ -135,7 +135,7 @@ public class TwitterAPIAdapter {
         log.info("Scheduler is shut down.");
     }
 
-    public void startNewsStream() throws SchedulerException, EmptyQueryParamsException {
+    public void startTweetsStream() throws SchedulerException, EmptyQueryParamsException {
         if (this.queryParams != null && (!this.queryParams.isEmpty())) {
             initTweetsFetchJob();
             addJobToScheduler();
